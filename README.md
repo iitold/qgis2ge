@@ -1,6 +1,6 @@
 # qgis2ge - QGIS to Google Earth
 
-[![Release](https://img.shields.io/badge/release-v1.2.3-blue.svg)](https://github.com/iitold/qgis2ge/releases)
+[![Release](https://img.shields.io/badge/release-v1.2.4-blue.svg)](https://github.com/iitold/qgis2ge/releases)
 [![QGIS Version](https://img.shields.io/badge/QGIS-3.22+-brightgreen.svg)](https://qgis.org)
 [![Author](https://img.shields.io/badge/Author-iitold-orange.svg)](https://github.com/iitold)
 [![Email](https://img.shields.io/badge/Email-doancongthanh92%40gmail.com-red.svg)](mailto:doancongthanh92@gmail.com)
