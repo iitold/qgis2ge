@@ -1,4 +1,4 @@
-# qgis2ge - QGIS to Google Earth Plugin
+﻿# qgis2ge - QGIS to Google Earth Plugin
 
 [![GitHub Release](https://img.shields.io/badge/release-v1.1.0-blue.svg)](https://github.com/iitold/qgis2ge/releases)
 [![QGIS Minimum Version](https://img.shields.io/badge/QGIS-3.22+-brightgreen.svg)](https://qgis.org)
