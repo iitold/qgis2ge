@@ -356,15 +356,6 @@ QProgressBar::chunk {
     border-radius: 5px;
 }
 
-/* Update Banner */
-QFrame#updateBanner {
-    background-color: palette(alternate-base);
-    border: 1px solid palette(midlight);
-    border-radius: 8px;
-    padding: 8px 12px;
-    margin-bottom: 2px;
-}
-
 /* Error Label */
 QLabel#errorLabel {
     color: #D32F2F;

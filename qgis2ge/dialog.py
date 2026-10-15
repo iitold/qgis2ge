@@ -175,47 +175,6 @@ class Qgis2GeDialog(QDialog):
 
         self.content_layout.addWidget(header_frame)
 
-        # Update Banner
-        self.frame_update_banner = QFrame()
-        self.frame_update_banner.setObjectName("updateBanner")
-        self.frame_update_banner.setVisible(False)
-        banner_layout = QVBoxLayout(self.frame_update_banner)
-        banner_layout.setContentsMargins(12, 8, 12, 8)
-        banner_layout.setSpacing(6)
-
-        banner_top = QHBoxLayout()
-        banner_top.setSpacing(8)
-        self.lbl_update_status = QLabel(self.tr("Checking for updates..."))
-        self.lbl_update_status.setWordWrap(True)
-
-        self.btn_update_now = QPushButton(self.tr("Update Now"))
-        self.btn_update_now.setObjectName("btnUpdateNow")
-        self.btn_update_now.setVisible(False)
-        self.btn_update_now.clicked.connect(self._on_apply_update)
-
-        self.btn_view_notes = QPushButton(self.tr("Notes"))
-        self.btn_view_notes.setProperty("class", "SmallActionBtn")
-        self.btn_view_notes.setVisible(False)
-        self.btn_view_notes.clicked.connect(self._on_view_notes)
-
-        btn_dismiss_banner = QPushButton("✕")
-        btn_dismiss_banner.setFixedSize(18, 18)
-        btn_dismiss_banner.setFlat(True)
-        btn_dismiss_banner.clicked.connect(lambda: self.frame_update_banner.setVisible(False))
-
-        banner_top.addWidget(self.lbl_update_status, 1)
-        banner_top.addWidget(self.btn_update_now)
-        banner_top.addWidget(self.btn_view_notes)
-        banner_top.addWidget(btn_dismiss_banner)
-        banner_layout.addLayout(banner_top)
-
-        self.prg_update = QProgressBar()
-        self.prg_update.setRange(0, 100)
-        self.prg_update.setVisible(False)
-        banner_layout.addWidget(self.prg_update)
-
-        self.content_layout.addWidget(self.frame_update_banner)
-
         # Card 1: Data Source
         card_data, layout_data = self._create_card(self.tr("1. Data Source"))
         grid_data = QGridLayout()
@@ -1042,84 +1001,113 @@ class Qgis2GeDialog(QDialog):
         self.accept()
 
     def _on_check_update(self) -> None:
-        """Trigger update check against GitHub repository in background."""
-        repo = "iitold/qgis2ge"
-        self.frame_update_banner.setVisible(True)
-        self.lbl_update_status.setText(self.tr("Checking for updates on GitHub..."))
-        self.btn_update_now.setVisible(False)
-        self.btn_view_notes.setVisible(False)
-        self.prg_update.setVisible(False)
+        """Trigger update check or execute pending update/reload action without layout shift."""
+        from qgis.PyQt.QtCore import QTimer
+
+        # Case 1: An update is available and user clicks the update button
+        if self.latest_update_info and self.latest_update_info.has_update and "Update" in self.btn_check_update.text():
+            new_v = self.latest_update_info.latest_version
+            msg = (
+                f"A new version v{new_v} of qgis2ge is available!\n"
+                f"(Your current version: v{self.current_version})\n\n"
+            )
+            if self.latest_update_info.changelog:
+                msg += f"Release Notes:\n{self.latest_update_info.changelog.strip()}\n\n"
+            msg += "Do you want to download and install this update now?"
+
+            reply = QMessageBox.question(
+                self,
+                self.tr("qgis2ge Update Available"),
+                msg,
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes,
+            )
+            if reply == QMessageBox.Yes:
+                self._on_apply_update()
+            return
+
+        # Case 2: Update was installed and user clicks Reload Plugin
+        if "Reload" in self.btn_check_update.text():
+            self._on_reload_and_close()
+            return
+
+        # Case 3: Initial Check
+        self.btn_check_update.setText(self.tr("Checking..."))
+        self.btn_check_update.setEnabled(False)
 
         self.check_update_task = CheckUpdateTask(
-            repo=repo,
+            repo="iitold/qgis2ge",
             current_version=self.current_version,
             on_completed=self._on_check_update_completed,
         )
         QgsApplication.taskManager().addTask(self.check_update_task)
 
     def _on_check_update_completed(self, info: UpdateInfo) -> None:
-        """Handle results of update check."""
+        """Handle results of update check with zero layout shift."""
+        from qgis.PyQt.QtCore import QTimer
+
         self.latest_update_info = info
+        self.btn_check_update.setEnabled(True)
+
         if info.error_message:
-            self.lbl_update_status.setText(self.tr(f"Update check: {info.error_message}"))
+            self.btn_check_update.setText(self.tr("Check Failed"))
+            QTimer.singleShot(3000, lambda: self.btn_check_update.setText(self.tr("Check for Updates")))
+            if self.iface:
+                self.iface.messageBar().pushWarning(self.tr("qgis2ge"), self.tr(f"Update check: {info.error_message}"))
             return
 
         if info.has_update:
-            self.lbl_update_status.setText(
-                self.tr(f"New version v{info.latest_version} available! (Current: v{info.current_version})")
+            self.btn_check_update.setText(self.tr(f"★ Update to v{info.latest_version}"))
+            self.btn_check_update.setStyleSheet(
+                "background-color: #2E7D32; color: #FFFFFF; font-weight: 700; border: none; border-radius: 10px; padding: 2px 10px;"
             )
-            self.btn_update_now.setVisible(True)
-            self.btn_update_now.setEnabled(True)
-            if info.changelog:
-                self.btn_view_notes.setVisible(True)
+            if self.iface:
+                self.iface.messageBar().pushInfo(
+                    self.tr("qgis2ge"),
+                    self.tr(f"New version v{info.latest_version} available! Click 'Update to v{info.latest_version}' in the dialog."),
+                    duration=6,
+                )
         else:
-            self.lbl_update_status.setText(
-                self.tr(f"You have the latest version (v{info.current_version}).")
-            )
+            self.btn_check_update.setText(self.tr("✓ Up to date"))
+            QTimer.singleShot(3500, lambda: self.btn_check_update.setText(self.tr("Check for Updates")))
 
     def _on_apply_update(self) -> None:
-        """Download and install the latest update in-place."""
+        """Download and install the latest update in background."""
         if not self.latest_update_info or not self.latest_update_info.download_url:
             return
 
-        self.btn_update_now.setEnabled(False)
-        self.prg_update.setVisible(True)
-        self.prg_update.setValue(0)
-        self.lbl_update_status.setText(self.tr("Downloading and installing update..."))
+        self.btn_check_update.setText(self.tr("Downloading..."))
+        self.btn_check_update.setEnabled(False)
 
         self.install_update_task = InstallUpdateTask(
             download_url=self.latest_update_info.download_url,
             on_completed=self._on_install_completed,
         )
-        self.install_update_task.progressChanged.connect(lambda p: self.prg_update.setValue(int(p)))
         QgsApplication.taskManager().addTask(self.install_update_task)
 
     def _on_install_completed(self, success: bool, message: str) -> None:
         """Handle update installation result on the main GUI thread."""
-        self.prg_update.setVisible(False)
+        from qgis.PyQt.QtCore import QTimer
+
+        self.btn_check_update.setEnabled(True)
         if success:
             new_ver = self.latest_update_info.latest_version if self.latest_update_info else self.current_version
             self.current_version = new_ver
             self.lbl_version_badge.setText(f"v{self.current_version}")
-            self.lbl_update_status.setText(
-                self.tr(f"✓ Updated to v{new_ver}! Click 'Reload Now' or restart QGIS.")
+            self.btn_check_update.setText(self.tr("Reload Plugin"))
+            self.btn_check_update.setStyleSheet(
+                "background-color: #1976D2; color: #FFFFFF; font-weight: 700; border: none; border-radius: 10px; padding: 2px 10px;"
             )
-            self.btn_update_now.setText(self.tr("Reload Now"))
-            self.btn_update_now.setVisible(True)
-            self.btn_update_now.setEnabled(True)
-            try:
-                self.btn_update_now.clicked.disconnect()
-            except Exception:
-                pass
-            self.btn_update_now.clicked.connect(self._on_reload_and_close)
-            if self.iface:
-                self.iface.messageBar().pushSuccess(
-                    self.tr("qgis2ge"),
-                    self.tr(f"qgis2ge updated to v{new_ver}! Click 'Reload Now' or restart QGIS to apply."),
-                )
+            QMessageBox.information(
+                self,
+                self.tr("Update Installed"),
+                self.tr(f"qgis2ge has been updated to v{new_ver} successfully!\n\nClick 'Reload Plugin' or restart QGIS to apply the new version."),
+            )
         else:
-            self.lbl_update_status.setText(self.tr(f"Installation failed: {message}"))
-            self.btn_update_now.setEnabled(True)
+            self.btn_check_update.setText(self.tr("Update Failed"))
+            self.btn_check_update.setStyleSheet("")
+            QMessageBox.warning(self, self.tr("Update Failed"), self.tr(f"Installation failed: {message}"))
+            QTimer.singleShot(4000, lambda: self.btn_check_update.setText(self.tr("Check for Updates")))
 
     def _on_reload_and_close(self) -> None:
         """Close dialog and trigger safe reload on the next Qt main loop iteration."""
@@ -1146,13 +1134,3 @@ class Qgis2GeDialog(QDialog):
                     )
 
         QTimer.singleShot(300, do_reload)
-
-    def _on_view_notes(self) -> None:
-        """Display release notes dialog."""
-        if not self.latest_update_info or not self.latest_update_info.changelog:
-            return
-        QMessageBox.information(
-            self,
-            self.tr(f"Release Notes - v{self.latest_update_info.latest_version}"),
-            self.latest_update_info.changelog,
-        )

@@ -22,16 +22,26 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Prepare Plugin Package
+      - name: Package Plugin (Clean 25KB Distribution)
         run: |
-          mkdir -p build
-          # Create a clean copy excluding cache and tests for release
-          rsync -av --exclude '__pycache__' --exclude '*.pyc' --exclude 'tests' qgis2ge build/
-          cd build
-          zip -r ../qgis2ge.zip qgis2ge
-          cd ..
-          echo "Created qgis2ge.zip:"
-          ls -lh qgis2ge.zip
+          python -c "
+          import os, zipfile
+          zip_name = 'qgis2ge.zip'
+          with zipfile.ZipFile(zip_name, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+              for root, dirs, files in os.walk('qgis2ge'):
+                  # Exclude tests and pycache from release distribution
+                  parts = set(root.split(os.sep))
+                  if 'tests' in parts or '__pycache__' in parts:
+                      continue
+                  for f in sorted(files):
+                      if f.endswith(('.pyc', '.pyo', '.bak', '.tmp')):
+                          continue
+                      fp = os.path.join(root, f)
+                      arcname = os.path.relpath(fp, '.')
+                      zf.write(fp, arcname)
+                      print(f'Packed: {arcname}')
+          print(f'Successfully built {zip_name} - Size: {os.path.getsize(zip_name)} bytes')
+          "
 
       - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v2
