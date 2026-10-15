@@ -4,13 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   build-and-release:
-    name: Package and Release Plugin
+    name: Package, Release and Publish to QGIS
     runs-on: ubuntu-latest
 
     steps:
@@ -22,29 +23,12 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Package Plugin (Clean 25KB Distribution)
-        run: |
-          python -c "
-          import os, zipfile
-          zip_name = 'qgis2ge.zip'
-          with zipfile.ZipFile(zip_name, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-              for root, dirs, files in os.walk('qgis2ge'):
-                  # Exclude tests and pycache from release distribution
-                  parts = set(root.split(os.sep))
-                  if 'tests' in parts or '__pycache__' in parts:
-                      continue
-                  for f in sorted(files):
-                      if f.endswith(('.pyc', '.pyo', '.bak', '.tmp')):
-                          continue
-                      fp = os.path.join(root, f)
-                      arcname = os.path.relpath(fp, '.')
-                      zf.write(fp, arcname)
-                      print(f'Packed: {arcname}')
-          print(f'Successfully built {zip_name} - Size: {os.path.getsize(zip_name)} bytes')
-          "
+      - name: Build QGIS Compliant Distribution ZIP
+        run: python scripts/build_zip.py
 
       - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: qgis2ge.zip
           name: Release ${{ github.ref_name }}
@@ -53,3 +37,29 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install qgis-plugin-ci
+        if: env.QGIS_TOKEN != '' || env.OSGEO_PASSWORD != ''
+        run: pip install qgis-plugin-ci
+        env:
+          QGIS_TOKEN: ${{ secrets.QGIS_TOKEN }}
+          OSGEO_PASSWORD: ${{ secrets.OSGEO_PASSWORD }}
+
+      - name: Deploy to QGIS Official Plugin Repository (via Token)
+        if: env.QGIS_TOKEN != ''
+        run: >-
+          qgis-plugin-ci release ${{ github.ref_name }}
+          --github-token ${{ secrets.GITHUB_TOKEN }}
+          --qgis-token ${{ secrets.QGIS_TOKEN }}
+        env:
+          QGIS_TOKEN: ${{ secrets.QGIS_TOKEN }}
+
+      - name: Deploy to QGIS Official Plugin Repository (via OSGeo User/Pass)
+        if: env.QGIS_TOKEN == '' && env.OSGEO_PASSWORD != ''
+        run: >-
+          qgis-plugin-ci release ${{ github.ref_name }}
+          --github-token ${{ secrets.GITHUB_TOKEN }}
+          --osgeo-username ${{ secrets.OSGEO_USERNAME }}
+          --osgeo-password ${{ secrets.OSGEO_PASSWORD }}
+        env:
+          OSGEO_PASSWORD: ${{ secrets.OSGEO_PASSWORD }}
