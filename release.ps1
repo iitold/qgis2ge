@@ -141,19 +141,15 @@ if (-not $SkipTests) {
     Write-Host "[!] Skipping unit tests as requested." -ForegroundColor Yellow
 }
 
-# 6. Package clean qgis2ge.zip
-Write-Host "`n[*] Packaging qgis2ge.zip..." -ForegroundColor Cyan
-$ZipPath = Join-Path $ScriptDir "qgis2ge.zip"
-if (Test-Path $ZipPath) { Remove-Item -Force $ZipPath }
-
-$StageDir = Join-Path $env:TEMP "qgis2ge_stage_$([System.Guid]::NewGuid().ToString('N'))"
-$StagePluginDir = Join-Path $StageDir "qgis2ge"
-New-Item -ItemType Directory -Path $StagePluginDir -Force | Out-Null
-
-Copy-Item -Path (Join-Path $ScriptDir "qgis2ge\*") -Destination $StagePluginDir -Recurse -Exclude "__pycache__","*.pyc"
-Compress-Archive -Path $StagePluginDir -DestinationPath $ZipPath -Force
-Remove-Item -Recurse -Force $StageDir
-Write-Host "[+] Packaged clean $ZipPath ($((Get-Item $ZipPath).Length) bytes)" -ForegroundColor Green
+# 6. Package clean qgis2ge.zip (Strict QGIS Repository Specification)
+Write-Host "`n[*] Packaging qgis2ge.zip using QGIS-compliant builder..." -ForegroundColor Cyan
+$BuildScript = Join-Path $ScriptDir "scripts\build_zip.py"
+if (Test-Path $BuildScript) {
+    python $BuildScript
+} else {
+    Write-Error "Could not find build script at $BuildScript"
+    exit 1
+}
 
 # 7. Deploy to local QGIS profile for immediate testing
 $LocalPluginDir = Join-Path $env:APPDATA "QGIS\QGIS3\profiles\default\python\plugins\qgis2ge"
@@ -211,21 +207,21 @@ Write-Host "[+] Created Git tag: $TagName" -ForegroundColor Green
 # 11. Push to GitHub
 if (-not $NoPush) {
     Write-Host "`n==========================================================" -ForegroundColor Cyan
-    $Confirm = Read-Host "Push commit and tag '$TagName' to GitHub ($TargetRemote)? (Y/N)"
-    if ($Confirm -eq 'Y' -or $Confirm -eq 'y') {
+    $Confirm = Read-Host "Push commit and tag '$TagName' to GitHub ($TargetRemote)? [Press ENTER for 'Y']"
+    if ([string]::IsNullOrWhiteSpace($Confirm) -or $Confirm -eq 'Y' -or $Confirm -eq 'y') {
         Write-Host "[*] Pushing to origin main and tag $TagName..." -ForegroundColor Cyan
         git push -u origin main
         git push origin $TagName --force
 
         Write-Host "`n==========================================================" -ForegroundColor Green
-        Write-Host "  SUCCESS! Release $TagName pushed to GitHub!             " -ForegroundColor Green
+        Write-Host "  SUCCESS! Release $TagName pushed to GitHub & QGIS CI!    " -ForegroundColor Green
         Write-Host "==========================================================" -ForegroundColor Green
         Write-Host "GitHub Action is now running:"
-        Write-Host "  -> https://github.com/iitold/qgis2ge/actions"
+        Write-Host "  -> https://github.com/iitold/qgis2ge/actions" -ForegroundColor Cyan
         Write-Host "It will compile qgis2ge.zip and attach it to:"
-        Write-Host "  -> https://github.com/iitold/qgis2ge/releases/tag/$TagName"
-        Write-Host "In QGIS, users can simply open qgis2ge, click"
-        Write-Host "'Check for Updates' -> 'Update Now' to update automatically!"
+        Write-Host "  -> https://github.com/iitold/qgis2ge/releases/tag/$TagName" -ForegroundColor Cyan
+        Write-Host "And automatically deploy to QGIS Official Repository:"
+        Write-Host "  -> https://plugins.qgis.org/plugins/qgis2ge/" -ForegroundColor Cyan
     } else {
         Write-Host "[*] Push skipped. You can manually push when ready using:" -ForegroundColor Yellow
         Write-Host "    git push origin main"
