@@ -119,10 +119,10 @@ if (-not $SkipTests) {
     $TestCmd = ""
 
     if (Test-Path $QgisPython) {
-        $TestCmd = "& `"$QgisPython`" -m unittest qgis2ge.tests.test_exporter"
+        $TestCmd = "& `"$QgisPython`" -m unittest discover -s tests"
     } else {
         # Check standard python
-        $TestCmd = "python -m unittest qgis2ge.tests.test_exporter"
+        $TestCmd = "python -m unittest discover -s tests"
     }
 
     Write-Host "Executing: $TestCmd" -ForegroundColor Gray
