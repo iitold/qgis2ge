@@ -74,19 +74,27 @@ class Qgis2GePlugin:
 
         def do_reload():
             try:
-                if "qgis2ge" in qgis.utils.plugins:
+                pkg = "qgis2ge"
+                if pkg in qgis.utils.active_plugins:
+                    qgis.utils.unloadPlugin(pkg)
+                elif pkg in qgis.utils.plugins:
                     try:
-                        qgis.utils.plugins["qgis2ge"].unload()
+                        qgis.utils.plugins[pkg].unload()
                     except Exception:
                         pass
-                    del qgis.utils.plugins["qgis2ge"]
+                    del qgis.utils.plugins[pkg]
 
-                cached = [m for m in list(sys.modules.keys()) if m == "qgis2ge" or m.startswith("qgis2ge.")]
+                if pkg in qgis.utils.active_plugins:
+                    qgis.utils.active_plugins.remove(pkg)
+
+                cached = [m for m in list(sys.modules.keys()) if m == pkg or m.startswith(pkg + ".")]
                 for m in cached:
                     del sys.modules[m]
 
-                qgis.utils.loadPlugin("qgis2ge")
-                qgis.utils.startPlugin("qgis2ge")
+                sys.path_importer_cache.clear()
+
+                qgis.utils.loadPlugin(pkg)
+                qgis.utils.startPlugin(pkg)
 
                 if self.iface:
                     self.iface.messageBar().pushSuccess("qgis2ge", "Plugin cleanly reloaded from disk!")

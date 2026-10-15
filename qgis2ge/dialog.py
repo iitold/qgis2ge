@@ -1119,6 +1119,46 @@ class Qgis2GeDialog(QDialog):
             QMessageBox.warning(self, self.tr("Update Failed"), self.tr(f"Installation failed: {message}"))
             QTimer.singleShot(4000, lambda: self.btn_check_update.setText(self.tr("Check for Updates")))
 
+    def _perform_clean_reload(self, reopen_dialog: bool = False) -> bool:
+        """Purge all cached submodules from RAM and reload freshly from disk via QGIS unload/load cycle."""
+        import sys
+        import qgis.utils
+
+        pkg = "qgis2ge"
+
+        # 1. Gracefully unload plugin via official QGIS API
+        if pkg in qgis.utils.active_plugins:
+            qgis.utils.unloadPlugin(pkg)
+        elif pkg in qgis.utils.plugins:
+            try:
+                qgis.utils.plugins[pkg].unload()
+            except Exception:
+                pass
+            del qgis.utils.plugins[pkg]
+
+        if pkg in qgis.utils.active_plugins:
+            qgis.utils.active_plugins.remove(pkg)
+
+        # 2. PURGE all cached qgis2ge submodules from Python sys.modules
+        cached_modules = [
+            m for m in list(sys.modules.keys())
+            if m == pkg or m.startswith(pkg + ".")
+        ]
+        for m in cached_modules:
+            del sys.modules[m]
+
+        sys.path_importer_cache.clear()
+
+        # 3. Clean load and start
+        qgis.utils.loadPlugin(pkg)
+        started = qgis.utils.startPlugin(pkg)
+
+        # 4. Optionally re-open dialog if plugin started successfully
+        if reopen_dialog and started and pkg in qgis.utils.plugins:
+            qgis.utils.plugins[pkg].run()
+
+        return started
+
     def _on_reload_and_close(self) -> None:
         """Close dialog and trigger a true, complete hot-reload on the next Qt main loop iteration."""
         from qgis.PyQt.QtCore import QTimer
@@ -1128,31 +1168,7 @@ class Qgis2GeDialog(QDialog):
 
         def do_reload():
             try:
-                import sys
-                import qgis.utils
-
-                # 1. Unload old plugin instance from QGIS GUI
-                if "qgis2ge" in qgis.utils.plugins:
-                    try:
-                        qgis.utils.plugins["qgis2ge"].unload()
-                    except Exception:
-                        pass
-                    del qgis.utils.plugins["qgis2ge"]
-
-                # 2. PURGE all cached qgis2ge submodules from Python sys.modules!
-                # Standard reloadPlugin() only removes top-level package and retains cached submodules.
-                # Deleting all qgis2ge.* keys forces Python to re-read all fresh .py files from disk.
-                cached_modules = [
-                    m for m in list(sys.modules.keys())
-                    if m == "qgis2ge" or m.startswith("qgis2ge.")
-                ]
-                for m in cached_modules:
-                    del sys.modules[m]
-
-                # 3. Clean load and start
-                qgis.utils.loadPlugin("qgis2ge")
-                qgis.utils.startPlugin("qgis2ge")
-
+                self._perform_clean_reload(reopen_dialog=False)
                 if self.iface:
                     self.iface.messageBar().pushSuccess(
                         self.tr("qgis2ge"),
@@ -1165,7 +1181,7 @@ class Qgis2GeDialog(QDialog):
                         self.tr(f"Update applied to disk. Please restart QGIS to finalize: {e}"),
                     )
 
-        QTimer.singleShot(300, do_reload)
+        QTimer.singleShot(250, do_reload)
 
     def _on_clean_reload(self) -> None:
         """Purge all cached submodules from RAM and reload freshly from disk, then re-open dialog."""
@@ -1175,33 +1191,7 @@ class Qgis2GeDialog(QDialog):
 
         def do_clean_reload():
             try:
-                import sys
-                import qgis.utils
-
-                # 1. Unload old plugin instance from QGIS GUI
-                if "qgis2ge" in qgis.utils.plugins:
-                    try:
-                        qgis.utils.plugins["qgis2ge"].unload()
-                    except Exception:
-                        pass
-                    del qgis.utils.plugins["qgis2ge"]
-
-                # 2. Purge all cached qgis2ge submodules
-                cached_modules = [
-                    m for m in list(sys.modules.keys())
-                    if m == "qgis2ge" or m.startswith("qgis2ge.")
-                ]
-                for m in cached_modules:
-                    del sys.modules[m]
-
-                # 3. Clean load and start
-                qgis.utils.loadPlugin("qgis2ge")
-                qgis.utils.startPlugin("qgis2ge")
-
-                # 4. Re-open the freshly loaded dialog!
-                if "qgis2ge" in qgis.utils.plugins:
-                    qgis.utils.plugins["qgis2ge"].run()
-
+                self._perform_clean_reload(reopen_dialog=True)
                 if self.iface:
                     self.iface.messageBar().pushSuccess(
                         self.tr("qgis2ge"),
