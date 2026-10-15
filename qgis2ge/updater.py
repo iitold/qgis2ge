@@ -49,14 +49,21 @@ def get_current_version() -> str:
     plugin_dir = os.path.dirname(__file__)
     metadata_path = os.path.join(plugin_dir, "metadata.txt")
     if os.path.exists(metadata_path):
-        config = configparser.ConfigParser()
         try:
-            config.read(metadata_path, encoding="utf-8")
+            with open(metadata_path, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+            # Direct regex match for version (handles BOM and formatting quirks)
+            m = re.search(r"^version\s*=\s*(.+)$", content, re.MULTILINE)
+            if m:
+                return m.group(1).strip()
+            # Fallback to ConfigParser
+            config = configparser.ConfigParser()
+            config.read_string(content)
             if "general" in config and "version" in config["general"]:
-                return config["general"]["version"]
+                return config["general"]["version"].strip()
         except Exception:
             pass
-    return "1.1.0"
+    return "1.1.3"
 
 
 def check_github_update(repo: str = "iitold/qgis2ge", current_ver: Optional[str] = None, timeout: int = 10) -> UpdateInfo:

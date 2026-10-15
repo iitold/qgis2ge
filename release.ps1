@@ -96,9 +96,10 @@ Write-Host "[+] Target release version: v$NewVersion" -ForegroundColor Green
 Write-Host "[+] Release notes         : $ReleaseNotes" -ForegroundColor Green
 
 # 3. Update metadata.txt
+$Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 $UpdatedMetadata = $MetadataContent -replace "(?m)^version\s*=.+$", "version=$NewVersion"
-[System.IO.File]::WriteAllText($MetadataPath, $UpdatedMetadata, [System.Text.Encoding]::UTF8)
-Write-Host "[+] Updated $MetadataPath with version=$NewVersion" -ForegroundColor Green
+[System.IO.File]::WriteAllText($MetadataPath, $UpdatedMetadata, $Utf8NoBom)
+Write-Host "[+] Updated $MetadataPath with version=$NewVersion (UTF-8 No BOM)" -ForegroundColor Green
 
 # 4. Update README.md version if present
 $ReadmePath = Join-Path $ScriptDir "README.md"
@@ -107,7 +108,7 @@ if (Test-Path $ReadmePath) {
     $ReadmeContent = $ReadmeContent -replace "release-v[0-9\.]+-", "release-v$NewVersion-"
     $ReadmeContent = $ReadmeContent -replace "version-[0-9\.]+-", "version-$NewVersion-"
     $ReadmeContent = $ReadmeContent -replace "Current Version:\s*\*\*[0-9\.]+\*\*", "Current Version: **$NewVersion**"
-    [System.IO.File]::WriteAllText($ReadmePath, $ReadmeContent, [System.Text.Encoding]::UTF8)
+    [System.IO.File]::WriteAllText($ReadmePath, $ReadmeContent, $Utf8NoBom)
     Write-Host "[+] Updated $ReadmePath" -ForegroundColor Green
 }
 
