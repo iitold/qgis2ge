@@ -44,11 +44,37 @@ if ($MetadataContent -match "(?m)^version\s*=\s*(.+)$") {
 }
 Write-Host "[*] Current version: $CurrentVersion" -ForegroundColor Yellow
 
+# Calculate smart auto-increment versions
+$NextPatch = "1.0.1"
+$NextMinor = "1.1.0"
+$NextMajor = "2.0.0"
+
+if ($CurrentVersion) {
+    $vParts = $CurrentVersion.Split('.')
+    if ($vParts.Count -ge 3) {
+        $major = 0; $minor = 0; $patch = 0
+        [int]::TryParse($vParts[0], [ref]$major) | Out-Null
+        [int]::TryParse($vParts[1], [ref]$minor) | Out-Null
+        [int]::TryParse($vParts[2], [ref]$patch) | Out-Null
+        $NextPatch = "$major.$minor.$($patch + 1)"
+        $NextMinor = "$major.$($minor + 1).0"
+        $NextMajor = "$($major + 1).0.0"
+    } elseif ($vParts.Count -eq 2) {
+        $NextPatch = "$($vParts[0]).$($vParts[1]).1"
+        $NextMinor = "$($vParts[0]).$([int]$vParts[1] + 1).0"
+        $NextMajor = "$([int]$vParts[0] + 1).0.0"
+    }
+}
+
+Write-Host "    -> Auto-bump (Patch) : $NextPatch (Press ENTER)" -ForegroundColor Gray
+Write-Host "    -> Minor feature     : $NextMinor" -ForegroundColor Gray
+Write-Host "    -> Major rewrite     : $NextMajor" -ForegroundColor Gray
+
 # 2. Prompt for version if not provided
 if (-not $NewVersion) {
-    $PromptVer = Read-Host "Enter new version (e.g. 1.2.0, press Enter to keep '$CurrentVersion')"
+    $PromptVer = Read-Host "Enter new version [Press ENTER to auto-bump to '$NextPatch']"
     if ([string]::IsNullOrWhiteSpace($PromptVer)) {
-        $NewVersion = $CurrentVersion
+        $NewVersion = $NextPatch
     } else {
         $NewVersion = $PromptVer.Trim().TrimStart('v')
     }
@@ -57,16 +83,17 @@ if (-not $NewVersion) {
 }
 
 if (-not $ReleaseNotes) {
-    $PromptNotes = Read-Host "Enter release notes / summary (e.g. Add KMZ support, UI redesign)"
+    $DefaultNotes = "Release v$NewVersion - Improvements and bug fixes"
+    $PromptNotes = Read-Host "Enter release notes [Press ENTER for '$DefaultNotes']"
     if ([string]::IsNullOrWhiteSpace($PromptNotes)) {
-        $ReleaseNotes = "Release v$NewVersion"
+        $ReleaseNotes = $DefaultNotes
     } else {
         $ReleaseNotes = $PromptNotes.Trim()
     }
 }
 
-Write-Host "[+] Preparing release version: v$NewVersion" -ForegroundColor Green
-Write-Host "[+] Release notes: $ReleaseNotes" -ForegroundColor Green
+Write-Host "[+] Target release version: v$NewVersion" -ForegroundColor Green
+Write-Host "[+] Release notes         : $ReleaseNotes" -ForegroundColor Green
 
 # 3. Update metadata.txt
 $UpdatedMetadata = $MetadataContent -replace "(?m)^version\s*=.+$", "version=$NewVersion"
@@ -77,6 +104,7 @@ Write-Host "[+] Updated $MetadataPath with version=$NewVersion" -ForegroundColor
 $ReadmePath = Join-Path $ScriptDir "README.md"
 if (Test-Path $ReadmePath) {
     $ReadmeContent = Get-Content $ReadmePath -Raw -Encoding UTF8
+    $ReadmeContent = $ReadmeContent -replace "release-v[0-9\.]+-", "release-v$NewVersion-"
     $ReadmeContent = $ReadmeContent -replace "version-[0-9\.]+-", "version-$NewVersion-"
     $ReadmeContent = $ReadmeContent -replace "Current Version:\s*\*\*[0-9\.]+\*\*", "Current Version: **$NewVersion**"
     [System.IO.File]::WriteAllText($ReadmePath, $ReadmeContent, [System.Text.Encoding]::UTF8)
