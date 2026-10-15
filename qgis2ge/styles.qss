@@ -261,6 +261,21 @@ QPushButton#btnCheckUpdate:hover {
     color: palette(highlighted-text);
 }
 
+QPushButton#btnCleanReload {
+    background-color: transparent;
+    color: palette(mid);
+    border: 1px solid palette(midlight);
+    border-radius: 10px;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 2px 8px;
+}
+
+QPushButton#btnCleanReload:hover {
+    background-color: palette(midlight);
+    color: palette(window-text);
+}
+
 QPushButton#btnUpdateNow {
     background-color: #2E7D32;
     color: #FFFFFF;

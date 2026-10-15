@@ -162,15 +162,25 @@ class Qgis2GeDialog(QDialog):
 
         self.lbl_version_badge = QLabel(f"v{self.current_version}")
         self.lbl_version_badge.setObjectName("badgeVersion")
-        self.lbl_version_badge.setAlignment(Qt.AlignCenter)
+        h_buttons = QHBoxLayout()
+        h_buttons.setSpacing(6)
 
         self.btn_check_update = QPushButton(self.tr("Check for Updates"))
         self.btn_check_update.setObjectName("btnCheckUpdate")
         self.btn_check_update.setCursor(Qt.PointingHandCursor)
         self.btn_check_update.clicked.connect(self._on_check_update)
 
+        self.btn_reload = QPushButton(self.tr("⟳ Reload"))
+        self.btn_reload.setObjectName("btnCleanReload")
+        self.btn_reload.setCursor(Qt.PointingHandCursor)
+        self.btn_reload.setToolTip(self.tr("Clean reload all plugin files from disk without restarting QGIS"))
+        self.btn_reload.clicked.connect(self._on_clean_reload)
+
+        h_buttons.addWidget(self.btn_check_update)
+        h_buttons.addWidget(self.btn_reload)
+
         vbox_actions.addWidget(self.lbl_version_badge, 0, Qt.AlignRight)
-        vbox_actions.addWidget(self.btn_check_update, 0, Qt.AlignRight)
+        vbox_actions.addLayout(h_buttons)
         header_layout.addLayout(vbox_actions)
 
         self.content_layout.addWidget(header_frame)
@@ -1110,27 +1120,98 @@ class Qgis2GeDialog(QDialog):
             QTimer.singleShot(4000, lambda: self.btn_check_update.setText(self.tr("Check for Updates")))
 
     def _on_reload_and_close(self) -> None:
-        """Close dialog and trigger safe reload on the next Qt main loop iteration."""
+        """Close dialog and trigger a true, complete hot-reload on the next Qt main loop iteration."""
         from qgis.PyQt.QtCore import QTimer
 
-        # Close the modal dialog so QGIS event loop is free
+        # Close the modal dialog so QGIS event loop is completely free
         self.close()
 
-        # Schedule plugin reload safely on QGIS main window thread after dialog is closed
         def do_reload():
             try:
+                import sys
                 import qgis.utils
-                qgis.utils.reloadPlugin("qgis2ge")
+
+                # 1. Unload old plugin instance from QGIS GUI
+                if "qgis2ge" in qgis.utils.plugins:
+                    try:
+                        qgis.utils.plugins["qgis2ge"].unload()
+                    except Exception:
+                        pass
+                    del qgis.utils.plugins["qgis2ge"]
+
+                # 2. PURGE all cached qgis2ge submodules from Python sys.modules!
+                # Standard reloadPlugin() only removes top-level package and retains cached submodules.
+                # Deleting all qgis2ge.* keys forces Python to re-read all fresh .py files from disk.
+                cached_modules = [
+                    m for m in list(sys.modules.keys())
+                    if m == "qgis2ge" or m.startswith("qgis2ge.")
+                ]
+                for m in cached_modules:
+                    del sys.modules[m]
+
+                # 3. Clean load and start
+                qgis.utils.loadPlugin("qgis2ge")
+                qgis.utils.startPlugin("qgis2ge")
+
                 if self.iface:
                     self.iface.messageBar().pushSuccess(
                         self.tr("qgis2ge"),
-                        self.tr(f"qgis2ge v{self.current_version} reloaded successfully!"),
+                        self.tr(f"qgis2ge v{self.current_version} hot-reloaded successfully! All modules refreshed."),
                     )
-            except Exception:
+            except Exception as e:
                 if self.iface:
-                    self.iface.messageBar().pushInfo(
+                    self.iface.messageBar().pushWarning(
                         self.tr("qgis2ge"),
-                        self.tr("Plugin files updated. Please restart QGIS to complete."),
+                        self.tr(f"Update applied to disk. Please restart QGIS to finalize: {e}"),
                     )
 
         QTimer.singleShot(300, do_reload)
+
+    def _on_clean_reload(self) -> None:
+        """Purge all cached submodules from RAM and reload freshly from disk, then re-open dialog."""
+        from qgis.PyQt.QtCore import QTimer
+
+        self.close()
+
+        def do_clean_reload():
+            try:
+                import sys
+                import qgis.utils
+
+                # 1. Unload old plugin instance from QGIS GUI
+                if "qgis2ge" in qgis.utils.plugins:
+                    try:
+                        qgis.utils.plugins["qgis2ge"].unload()
+                    except Exception:
+                        pass
+                    del qgis.utils.plugins["qgis2ge"]
+
+                # 2. Purge all cached qgis2ge submodules
+                cached_modules = [
+                    m for m in list(sys.modules.keys())
+                    if m == "qgis2ge" or m.startswith("qgis2ge.")
+                ]
+                for m in cached_modules:
+                    del sys.modules[m]
+
+                # 3. Clean load and start
+                qgis.utils.loadPlugin("qgis2ge")
+                qgis.utils.startPlugin("qgis2ge")
+
+                # 4. Re-open the freshly loaded dialog!
+                if "qgis2ge" in qgis.utils.plugins:
+                    qgis.utils.plugins["qgis2ge"].run()
+
+                if self.iface:
+                    self.iface.messageBar().pushSuccess(
+                        self.tr("qgis2ge"),
+                        self.tr("Plugin freshly reloaded from disk! UI refreshed."),
+                    )
+            except Exception as e:
+                if self.iface:
+                    self.iface.messageBar().pushWarning(
+                        self.tr("qgis2ge"),
+                        self.tr(f"Reload notice: Please restart QGIS: {e}"),
+                    )
+
+        QTimer.singleShot(250, do_clean_reload)

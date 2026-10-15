@@ -37,8 +37,16 @@ class Qgis2GePlugin:
         )
         self.action.triggered.connect(self.run)
 
+        self.reload_action = QAction(self.tr("qgis2ge: Clean Reload Plugin"), self.iface.mainWindow())
+        self.reload_action.setObjectName("qgis2geReloadAction")
+        self.reload_action.setStatusTip(
+            self.tr("Purge RAM module cache and reload qgis2ge freshly from disk without restarting QGIS")
+        )
+        self.reload_action.triggered.connect(self.clean_reload)
+
         # Add to Vector menu and Vector toolbar
         self.iface.addPluginToVectorMenu(self.tr("&qgis2ge"), self.action)
+        self.iface.addPluginToVectorMenu(self.tr("&qgis2ge"), self.reload_action)
         self.iface.addVectorToolBarIcon(self.action)
 
     def unload(self) -> None:
@@ -49,9 +57,44 @@ class Qgis2GePlugin:
             self.action.deleteLater()
             self.action = None
 
+        if self.reload_action is not None:
+            self.iface.removePluginVectorMenu(self.tr("&qgis2ge"), self.reload_action)
+            self.reload_action.deleteLater()
+            self.reload_action = None
+
         if self.dlg is not None:
             self.dlg.close()
             self.dlg = None
+
+    def clean_reload(self) -> None:
+        """Purge all cached submodules from RAM and reload freshly from disk."""
+        import sys
+        import qgis.utils
+        from qgis.PyQt.QtCore import QTimer
+
+        def do_reload():
+            try:
+                if "qgis2ge" in qgis.utils.plugins:
+                    try:
+                        qgis.utils.plugins["qgis2ge"].unload()
+                    except Exception:
+                        pass
+                    del qgis.utils.plugins["qgis2ge"]
+
+                cached = [m for m in list(sys.modules.keys()) if m == "qgis2ge" or m.startswith("qgis2ge.")]
+                for m in cached:
+                    del sys.modules[m]
+
+                qgis.utils.loadPlugin("qgis2ge")
+                qgis.utils.startPlugin("qgis2ge")
+
+                if self.iface:
+                    self.iface.messageBar().pushSuccess("qgis2ge", "Plugin cleanly reloaded from disk!")
+            except Exception as e:
+                if self.iface:
+                    self.iface.messageBar().pushWarning("qgis2ge", f"Reload notice: Please restart QGIS: {e}")
+
+        QTimer.singleShot(150, do_reload)
 
     def run(self) -> None:
         """Display the export configuration dialog."""
