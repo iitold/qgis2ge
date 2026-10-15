@@ -47,19 +47,27 @@ jobs:
 
       - name: Deploy to QGIS Official Plugin Repository (via Token)
         if: env.QGIS_TOKEN != ''
-        run: >-
-          qgis-plugin-ci release ${{ github.ref_name }}
-          --github-token ${{ secrets.GITHUB_TOKEN }}
-          --qgis-token ${{ secrets.QGIS_TOKEN }}
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          VERSION="${TAG_NAME#v}"
+          qgis-plugin-ci release "${VERSION}" \
+            --release-tag "${TAG_NAME}" \
+            --allow-uncommitted-changes \
+            --github-token "${{ secrets.GITHUB_TOKEN }}" \
+            --qgis-token "${{ secrets.QGIS_TOKEN }}"
         env:
           QGIS_TOKEN: ${{ secrets.QGIS_TOKEN }}
 
       - name: Deploy to QGIS Official Plugin Repository (via OSGeo User/Pass)
         if: env.QGIS_TOKEN == '' && env.OSGEO_PASSWORD != ''
-        run: >-
-          qgis-plugin-ci release ${{ github.ref_name }}
-          --github-token ${{ secrets.GITHUB_TOKEN }}
-          --osgeo-username ${{ secrets.OSGEO_USERNAME }}
-          --osgeo-password ${{ secrets.OSGEO_PASSWORD }}
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          VERSION="${TAG_NAME#v}"
+          qgis-plugin-ci release "${VERSION}" \
+            --release-tag "${TAG_NAME}" \
+            --allow-uncommitted-changes \
+            --github-token "${{ secrets.GITHUB_TOKEN }}" \
+            --osgeo-username "${{ secrets.OSGEO_USERNAME }}" \
+            --osgeo-password "${{ secrets.OSGEO_PASSWORD }}"
         env:
           OSGEO_PASSWORD: ${{ secrets.OSGEO_PASSWORD }}
