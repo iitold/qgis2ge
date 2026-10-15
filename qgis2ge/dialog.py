@@ -674,17 +674,21 @@ class Qgis2GeDialog(QDialog):
 
     def _render_swatches(self) -> None:
         """Render color chips (swatches) showing category colors and stroke style."""
-        while self.swatches_layout.count() > 1:
-            child = self.swatches_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+        new_container = QWidget()
+        new_layout = QHBoxLayout(new_container)
+        new_layout.setContentsMargins(0, 2, 0, 2)
+        new_layout.setSpacing(5)
 
         layer = self._get_current_layer()
         if not layer:
+            new_layout.addStretch(1)
+            self.swatches_scroll.setWidget(new_container)
             return
 
         renderer = layer.renderer()
         if not renderer:
+            new_layout.addStretch(1)
+            self.swatches_scroll.setWidget(new_container)
             return
 
         color_list: List[QColor] = []
@@ -704,6 +708,17 @@ class Qgis2GeDialog(QDialog):
             if renderer.symbol():
                 color_list.append(renderer.symbol().color())
 
+        # Deduplicate while preserving order and filter invalid colors
+        seen_colors = set()
+        unique_colors: List[QColor] = []
+        for col in color_list:
+            if not col or not col.isValid():
+                continue
+            key = (col.red(), col.green(), col.blue())
+            if key not in seen_colors:
+                seen_colors.add(key)
+                unique_colors.append(col)
+
         stroke_mode = self._get_stroke_mode()
         alpha_val = (
             int(round(self.sld_alpha.value() * 2.55))
@@ -711,7 +726,7 @@ class Qgis2GeDialog(QDialog):
             else None
         )
 
-        for col in color_list:
+        for col in unique_colors:
             chip = QLabel()
             chip.setFixedSize(22, 22)
             pixmap = QPixmap(22, 22)
@@ -740,9 +755,14 @@ class Qgis2GeDialog(QDialog):
             p.end()
 
             chip.setPixmap(pixmap)
-            self.swatches_layout.insertWidget(self.swatches_layout.count() - 1, chip)
+            new_layout.addWidget(chip)
 
-    def _on_stroke_mode_changed(self) -> None:
+        new_layout.addStretch(1)
+        self.swatches_scroll.setWidget(new_container)
+
+    def _on_stroke_mode_changed(self, checked: bool = True) -> None:
+        if not checked:
+            return
         self._render_swatches()
 
     def _on_alpha_symbol_toggled(self, checked: bool) -> None:
