@@ -1133,25 +1133,57 @@ class Qgis2GeDialog(QDialog):
         QgsApplication.taskManager().addTask(self.install_update_task)
 
     def _on_install_completed(self, success: bool, message: str) -> None:
-        """Handle update installation result."""
+        """Handle update installation result on the main GUI thread."""
         self.prg_update.setVisible(False)
         if success:
-            if self.latest_update_info:
-                self.current_version = self.latest_update_info.latest_version
-                self.lbl_version_badge.setText(f"v{self.current_version}")
+            new_ver = self.latest_update_info.latest_version if self.latest_update_info else self.current_version
+            self.current_version = new_ver
+            self.lbl_version_badge.setText(f"v{self.current_version}")
             self.lbl_update_status.setText(
-                self.tr(f"Plugin updated to v{self.current_version} successfully! Reloaded.")
+                self.tr(f"✓ Updated to v{new_ver}! Click 'Reload Now' or restart QGIS.")
             )
-            self.btn_update_now.setVisible(False)
-            self.btn_view_notes.setVisible(False)
+            self.btn_update_now.setText(self.tr("Reload Now"))
+            self.btn_update_now.setVisible(True)
+            self.btn_update_now.setEnabled(True)
+            try:
+                self.btn_update_now.clicked.disconnect()
+            except Exception:
+                pass
+            self.btn_update_now.clicked.connect(self._on_reload_and_close)
             if self.iface:
                 self.iface.messageBar().pushSuccess(
                     self.tr("qgis2ge"),
-                    self.tr(f"Plugin successfully updated to v{self.current_version}!"),
+                    self.tr(f"qgis2ge updated to v{new_ver}! Click 'Reload Now' or restart QGIS to apply."),
                 )
         else:
             self.lbl_update_status.setText(self.tr(f"Installation failed: {message}"))
             self.btn_update_now.setEnabled(True)
+
+    def _on_reload_and_close(self) -> None:
+        """Close dialog and trigger safe reload on the next Qt main loop iteration."""
+        from qgis.PyQt.QtCore import QTimer
+
+        # Close the modal dialog so QGIS event loop is free
+        self.close()
+
+        # Schedule plugin reload safely on QGIS main window thread after dialog is closed
+        def do_reload():
+            try:
+                import qgis.utils
+                qgis.utils.reloadPlugin("qgis2ge")
+                if self.iface:
+                    self.iface.messageBar().pushSuccess(
+                        self.tr("qgis2ge"),
+                        self.tr(f"qgis2ge v{self.current_version} reloaded successfully!"),
+                    )
+            except Exception:
+                if self.iface:
+                    self.iface.messageBar().pushInfo(
+                        self.tr("qgis2ge"),
+                        self.tr("Plugin files updated. Please restart QGIS to complete."),
+                    )
+
+        QTimer.singleShot(300, do_reload)
 
     def _on_view_notes(self) -> None:
         """Display release notes dialog."""

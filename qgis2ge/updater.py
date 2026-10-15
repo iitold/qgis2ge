@@ -238,20 +238,16 @@ def install_update_from_zip(
                 shutil.copy2(s_path, d_path)
 
         if progress_callback:
-            progress_callback(95, "Reloading plugin in QGIS...")
+            progress_callback(95, "Validating installation...")
 
-        # Reload plugin in QGIS
-        try:
-            import qgis.utils
-
-            qgis.utils.reloadPlugin("qgis2ge")
-        except Exception:
-            pass
+        # Verify metadata.txt exists in target directory
+        if not os.path.exists(os.path.join(target_plugin_dir, "metadata.txt")):
+            return False, "Installation check failed: metadata.txt not found."
 
         if progress_callback:
             progress_callback(100, "Update completed successfully!")
 
-        return True, "Plugin updated and reloaded successfully!"
+        return True, "Plugin files updated successfully!"
 
     except Exception as e:
         return False, f"Update failed: {str(e)}"
