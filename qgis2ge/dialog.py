@@ -408,7 +408,7 @@ class Qgis2GeDialog(QDialog):
         # Card 3: Advanced Options (Collapsible)
         card_adv, layout_adv = self._create_card(None)
 
-        self.btn_toggle_adv = QPushButton(self.tr("▶  Advanced Options (Attributes, Folders, Updates)"))
+        self.btn_toggle_adv = QPushButton(self.tr("▶  Advanced Options (Attributes & Folders)"))
         self.btn_toggle_adv.setObjectName("toggleAdvancedBtn")
         self.btn_toggle_adv.setCursor(Qt.PointingHandCursor)
         self.btn_toggle_adv.clicked.connect(self._toggle_advanced)
@@ -452,17 +452,6 @@ class Qgis2GeDialog(QDialog):
         self.lst_fields = QListWidget()
         self.lst_fields.setFixedHeight(115)
         layout_adv_inner.addWidget(self.lst_fields)
-
-        self.chk_auto_update = QCheckBox(self.tr("Check for updates automatically when opening dialog"))
-        layout_adv_inner.addWidget(self.chk_auto_update)
-
-        # Author & Support Info
-        lbl_author_info = QLabel(
-            self.tr('<b>Author:</b> iitold &bull; <a href="mailto:doancongthanh92@gmail.com" style="color: #1976d2; text-decoration: none;">doancongthanh92@gmail.com</a> &bull; <a href="https://github.com/iitold" style="color: #1976d2; text-decoration: none;">github.com/iitold</a>')
-        )
-        lbl_author_info.setOpenExternalLinks(True)
-        lbl_author_info.setStyleSheet("font-size: 11px; color: #64748b; padding-top: 4px;")
-        layout_adv_inner.addWidget(lbl_author_info)
 
         layout_adv.addWidget(self.frame_adv_content)
         self.content_layout.addWidget(card_adv)
@@ -589,9 +578,9 @@ class Qgis2GeDialog(QDialog):
         is_visible = self.frame_adv_content.isVisible()
         self.frame_adv_content.setVisible(not is_visible)
         if not is_visible:
-            self.btn_toggle_adv.setText(self.tr("▼  Advanced Options (Attributes, Folders, Updates)"))
+            self.btn_toggle_adv.setText(self.tr("▼  Advanced Options (Attributes & Folders)"))
         else:
-            self.btn_toggle_adv.setText(self.tr("▶  Advanced Options (Attributes, Folders, Updates)"))
+            self.btn_toggle_adv.setText(self.tr("▶  Advanced Options (Attributes & Folders)"))
 
     def _populate_layers(self) -> None:
         """Populate combobox with all polygon vector layers from project."""
@@ -922,9 +911,6 @@ class Qgis2GeDialog(QDialog):
         self.settings.setValue(
             self.SETTINGS_PREFIX + "scale_anchor", self.cbo_scale_anchor.currentData()
         )
-        self.settings.setValue(
-            self.SETTINGS_PREFIX + "auto_check_update", self.chk_auto_update.isChecked()
-        )
 
         cur_path = self.txt_path.text().strip()
         if cur_path:
@@ -974,11 +960,6 @@ class Qgis2GeDialog(QDialog):
         idx = self.cbo_scale_anchor.findData(anchor_val)
         if idx >= 0:
             self.cbo_scale_anchor.setCurrentIndex(idx)
-
-        auto_upd = self.settings.value(self.SETTINGS_PREFIX + "auto_check_update", False, type=bool)
-        self.chk_auto_update.setChecked(auto_upd)
-        if auto_upd:
-            QTimer.singleShot(800, self._on_check_update)
 
     def _update_ui_state(self) -> None:
         self._validate_path()
