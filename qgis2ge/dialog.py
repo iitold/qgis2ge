@@ -119,8 +119,8 @@ class Qgis2GeDialog(QDialog):
         # Scroll Area for fluid responsiveness
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         content_widget = QWidget()
         self.content_layout = QVBoxLayout(content_widget)
@@ -137,7 +137,7 @@ class Qgis2GeDialog(QDialog):
         icon_label = QLabel()
         if os.path.exists(icon_path):
             icon_label.setPixmap(QIcon(icon_path).pixmap(44, 44))
-        header_layout.addWidget(icon_label, 0, Qt.AlignTop)
+        header_layout.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignTop)
 
         title_vbox = QVBoxLayout()
         title_vbox.setSpacing(3)
@@ -158,7 +158,7 @@ class Qgis2GeDialog(QDialog):
         # Version Badge & Check Updates Pill Button
         vbox_actions = QVBoxLayout()
         vbox_actions.setSpacing(4)
-        vbox_actions.setAlignment(Qt.AlignRight | Qt.AlignTop)
+        vbox_actions.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
         self.lbl_version_badge = QLabel(f"v{self.current_version}")
         self.lbl_version_badge.setObjectName("badgeVersion")
@@ -167,19 +167,19 @@ class Qgis2GeDialog(QDialog):
 
         self.btn_check_update = QPushButton(self.tr("Check for Updates"))
         self.btn_check_update.setObjectName("btnCheckUpdate")
-        self.btn_check_update.setCursor(Qt.PointingHandCursor)
+        self.btn_check_update.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_check_update.clicked.connect(self._on_check_update)
 
         self.btn_reload = QPushButton(self.tr("⟳ Reload"))
         self.btn_reload.setObjectName("btnCleanReload")
-        self.btn_reload.setCursor(Qt.PointingHandCursor)
+        self.btn_reload.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_reload.setToolTip(self.tr("Clean reload all plugin files from disk without restarting QGIS"))
         self.btn_reload.clicked.connect(self._on_clean_reload)
 
         h_buttons.addWidget(self.btn_check_update)
         h_buttons.addWidget(self.btn_reload)
 
-        vbox_actions.addWidget(self.lbl_version_badge, 0, Qt.AlignRight)
+        vbox_actions.addWidget(self.lbl_version_badge, 0, Qt.AlignmentFlag.AlignRight)
         vbox_actions.addLayout(h_buttons)
         header_layout.addLayout(vbox_actions)
 
@@ -198,7 +198,7 @@ class Qgis2GeDialog(QDialog):
         lbl_layer.setProperty("class", "FormLabel")
         self.cbo_layer = QComboBox()
         self.cbo_layer.currentIndexChanged.connect(self._on_layer_changed)
-        grid_data.addWidget(lbl_layer, 0, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_data.addWidget(lbl_layer, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_data.addWidget(self.cbo_layer, 0, 1)
 
         lbl_sel = QLabel(self.tr("Feature selection:"))
@@ -206,7 +206,7 @@ class Qgis2GeDialog(QDialog):
         self.chk_selected = QCheckBox(self.tr("Export selected features only"))
         self.chk_selected.setEnabled(False)
         self.chk_selected.stateChanged.connect(self._update_ui_state)
-        grid_data.addWidget(lbl_sel, 1, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_data.addWidget(lbl_sel, 1, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_data.addWidget(self.chk_selected, 1, 1)
 
         layout_data.addLayout(grid_data)
@@ -225,7 +225,7 @@ class Qgis2GeDialog(QDialog):
         lbl_name = QLabel(self.tr("Placemark name:"))
         lbl_name.setProperty("class", "FormLabel")
         self.cbo_name_field = QComboBox()
-        grid_style.addWidget(lbl_name, 0, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_style.addWidget(lbl_name, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_style.addWidget(self.cbo_name_field, 0, 1)
 
         # Stroke Mode (2x2 radio grid)
@@ -259,7 +259,7 @@ class Qgis2GeDialog(QDialog):
         rdo_grid.addWidget(self.rdo_stroke_orig, 1, 0)
         rdo_grid.addWidget(self.rdo_stroke_none, 1, 1)
 
-        grid_style.addWidget(lbl_stroke, 1, 0, Qt.AlignLeft | Qt.AlignTop)
+        grid_style.addWidget(lbl_stroke, 1, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         grid_style.addWidget(rdo_container, 1, 1)
 
         # Stroke Width
@@ -284,7 +284,7 @@ class Qgis2GeDialog(QDialog):
         h_width.addWidget(self.spn_stroke_width)
         h_width.addStretch(1)
 
-        grid_style.addWidget(lbl_width, 2, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_style.addWidget(lbl_width, 2, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_style.addLayout(h_width, 2, 1)
 
         # Fill Opacity
@@ -297,14 +297,14 @@ class Qgis2GeDialog(QDialog):
         self.chk_alpha_symbol = QCheckBox(self.tr("From symbol"))
         self.chk_alpha_symbol.setChecked(True)
 
-        self.sld_alpha = QSlider(Qt.Horizontal)
+        self.sld_alpha = QSlider(Qt.Orientation.Horizontal)
         self.sld_alpha.setRange(0, 100)
         self.sld_alpha.setValue(80)
         self.sld_alpha.setEnabled(False)
 
         self.lbl_alpha_val = QLabel("80%")
         self.lbl_alpha_val.setFixedWidth(40)
-        self.lbl_alpha_val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.lbl_alpha_val.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.lbl_alpha_val.setEnabled(False)
 
         self.sld_alpha.valueChanged.connect(lambda v: self.lbl_alpha_val.setText(f"{v}%"))
@@ -314,7 +314,7 @@ class Qgis2GeDialog(QDialog):
         h_alpha.addWidget(self.sld_alpha, 1)
         h_alpha.addWidget(self.lbl_alpha_val)
 
-        grid_style.addWidget(lbl_alpha, 3, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_style.addWidget(lbl_alpha, 3, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_style.addLayout(h_alpha, 3, 1)
 
         # Size Scaling
@@ -347,7 +347,7 @@ class Qgis2GeDialog(QDialog):
         h_scale.addWidget(self.spn_scale)
         h_scale.addWidget(self.cbo_scale_anchor, 1)
 
-        grid_style.addWidget(lbl_scale, 4, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_style.addWidget(lbl_scale, 4, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_style.addLayout(h_scale, 4, 1)
 
         # Color Swatches Preview
@@ -357,10 +357,10 @@ class Qgis2GeDialog(QDialog):
         self.swatches_scroll = QScrollArea()
         self.swatches_scroll.setObjectName("swatchesScrollArea")
         self.swatches_scroll.setFixedHeight(26)
-        self.swatches_scroll.setFrameShape(QFrame.NoFrame)
+        self.swatches_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.swatches_scroll.setWidgetResizable(True)
-        self.swatches_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.swatches_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.swatches_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.swatches_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.swatches_container = QWidget()
         self.swatches_layout = QHBoxLayout(self.swatches_container)
         self.swatches_layout.setContentsMargins(0, 2, 0, 2)
@@ -368,7 +368,7 @@ class Qgis2GeDialog(QDialog):
         self.swatches_layout.addStretch(1)
         self.swatches_scroll.setWidget(self.swatches_container)
 
-        grid_style.addWidget(lbl_swatches, 5, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_style.addWidget(lbl_swatches, 5, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_style.addWidget(self.swatches_scroll, 5, 1)
 
         layout_style.addLayout(grid_style)
@@ -379,7 +379,7 @@ class Qgis2GeDialog(QDialog):
 
         self.btn_toggle_adv = QPushButton(self.tr("▶  Advanced Options (Attributes & Folders)"))
         self.btn_toggle_adv.setObjectName("toggleAdvancedBtn")
-        self.btn_toggle_adv.setCursor(Qt.PointingHandCursor)
+        self.btn_toggle_adv.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_toggle_adv.clicked.connect(self._toggle_advanced)
         layout_adv.addWidget(self.btn_toggle_adv)
 
@@ -449,7 +449,7 @@ class Qgis2GeDialog(QDialog):
         h_fmt.addWidget(self.rdo_fmt_kml)
         h_fmt.addStretch(1)
 
-        grid_file.addWidget(lbl_fmt, 0, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_file.addWidget(lbl_fmt, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_file.addLayout(h_fmt, 0, 1)
 
         # Save destination
@@ -468,7 +468,7 @@ class Qgis2GeDialog(QDialog):
         h_path.addWidget(self.txt_path, 1)
         h_path.addWidget(btn_browse)
 
-        grid_file.addWidget(lbl_path, 1, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        grid_file.addWidget(lbl_path, 1, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         grid_file.addLayout(h_path, 1, 1)
 
         self.lbl_path_error = QLabel()
@@ -525,7 +525,7 @@ class Qgis2GeDialog(QDialog):
                     '&bull; <a href="mailto:doancongthanh92@gmail.com" style="color: #1976d2; text-decoration: none;">doancongthanh92@gmail.com</a>')
         )
         lbl_footer_author.setOpenExternalLinks(True)
-        lbl_footer_author.setAlignment(Qt.AlignCenter)
+        lbl_footer_author.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_footer_author.setStyleSheet("font-size: 11px; color: #64748b; padding-top: 2px;")
         main_layout.addWidget(lbl_footer_author)
 
@@ -632,8 +632,8 @@ class Qgis2GeDialog(QDialog):
         self.lst_fields.clear()
         for fname in field_names:
             item = QListWidgetItem(fname, self.lst_fields)
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(Qt.Checked)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked)
 
         # Update group_by_category availability
         is_grouped_renderer = isinstance(
@@ -715,17 +715,17 @@ class Qgis2GeDialog(QDialog):
             chip = QLabel()
             chip.setFixedSize(22, 22)
             pixmap = QPixmap(22, 22)
-            pixmap.fill(Qt.transparent)
+            pixmap.fill(Qt.GlobalColor.transparent)
 
             p = QPainter(pixmap)
-            p.setRenderHint(QPainter.Antialiasing)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
 
             fill_c = QColor(col)
             if alpha_val is not None:
                 fill_c.setAlpha(alpha_val)
 
             if stroke_mode == "none":
-                stroke_pen = Qt.NoPen
+                stroke_pen = Qt.PenStyle.NoPen
             elif stroke_mode == "same":
                 stroke_pen = QPen(fill_c, 1.5)
             elif stroke_mode == "same_opaque":
@@ -757,7 +757,7 @@ class Qgis2GeDialog(QDialog):
             item.setHidden(query not in item.text().lower())
 
     def _set_all_fields_checked(self, checked: bool) -> None:
-        state = Qt.Checked if checked else Qt.Unchecked
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
         for idx in range(self.lst_fields.count()):
             self.lst_fields.item(idx).setCheckState(state)
 
@@ -831,7 +831,7 @@ class Qgis2GeDialog(QDialog):
         extra_fields: List[str] = []
         for idx in range(self.lst_fields.count()):
             item = self.lst_fields.item(idx)
-            if item.checkState() == Qt.Checked:
+            if item.checkState() == Qt.CheckState.Checked:
                 extra_fields.append(item.text())
 
         stroke_mode = self._get_stroke_mode()
@@ -1027,10 +1027,10 @@ class Qgis2GeDialog(QDialog):
                 self,
                 self.tr("qgis2ge Update Available"),
                 msg,
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes,
             )
-            if reply == QMessageBox.Yes:
+            if reply == QMessageBox.StandardButton.Yes:
                 self._on_apply_update()
             return
 

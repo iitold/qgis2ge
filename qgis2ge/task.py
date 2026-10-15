@@ -20,7 +20,7 @@ class KmlExportTask(QgsTask):
         options: ExportOptions,
         on_finished: Optional[Callable[[ExportResult], None]] = None,
     ):
-        super().__init__(description, QgsTask.CanCancel)
+        super().__init__(description, QgsTask.Flag.CanCancel)
         self.layer = layer
         self.options = options
         self.on_finished = on_finished

@@ -107,4 +107,4 @@ class Qgis2GePlugin:
     def run(self) -> None:
         """Display the export configuration dialog."""
         self.dlg = Qgis2GeDialog(self.iface, self.iface.mainWindow())
-        self.dlg.exec_()
+        self.dlg.exec()

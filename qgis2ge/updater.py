@@ -287,7 +287,7 @@ class CheckUpdateTask(QgsTask):
         current_version: str,
         on_completed: Callable[[UpdateInfo], None],
     ):
-        super().__init__(f"Check update ({repo})", QgsTask.CanCancel)
+        super().__init__(f"Check update ({repo})", QgsTask.Flag.CanCancel)
         self.repo = repo
         self.current_version = current_version
         self.on_completed = on_completed
@@ -312,7 +312,7 @@ class InstallUpdateTask(QgsTask):
         download_url: str,
         on_completed: Callable[[bool, str], None],
     ):
-        super().__init__("Install qgis2ge update", QgsTask.CanCancel)
+        super().__init__("Install qgis2ge update", QgsTask.Flag.CanCancel)
         self.download_url = download_url
         self.on_completed = on_completed
         self.success = False
