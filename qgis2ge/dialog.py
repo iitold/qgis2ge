@@ -469,6 +469,14 @@ class Qgis2GeDialog(QDialog):
         self.chk_auto_update = QCheckBox(self.tr("Check for updates automatically when opening dialog"))
         layout_adv_inner.addWidget(self.chk_auto_update)
 
+        # Author & Support Info
+        lbl_author_info = QLabel(
+            self.tr('<b>Author:</b> iitold &bull; <a href="mailto:doancongthanh92@gmail.com" style="color: #1976d2; text-decoration: none;">doancongthanh92@gmail.com</a> &bull; <a href="https://github.com/iitold" style="color: #1976d2; text-decoration: none;">github.com/iitold</a>')
+        )
+        lbl_author_info.setOpenExternalLinks(True)
+        lbl_author_info.setStyleSheet("font-size: 11px; color: #64748b; padding-top: 4px;")
+        layout_adv_inner.addWidget(lbl_author_info)
+
         layout_adv.addWidget(self.frame_adv_content)
         self.content_layout.addWidget(card_adv)
 
@@ -565,6 +573,16 @@ class Qgis2GeDialog(QDialog):
         footer_layout.addWidget(self.btn_export)
 
         main_layout.addWidget(footer_frame)
+
+        # Author attribution signature
+        lbl_footer_author = QLabel(
+            self.tr('Developed by <a href="https://github.com/iitold" style="color: #1976d2; text-decoration: none; font-weight: 600;">iitold</a> '
+                    '&bull; <a href="mailto:doancongthanh92@gmail.com" style="color: #1976d2; text-decoration: none;">doancongthanh92@gmail.com</a>')
+        )
+        lbl_footer_author.setOpenExternalLinks(True)
+        lbl_footer_author.setAlignment(Qt.AlignCenter)
+        lbl_footer_author.setStyleSheet("font-size: 11px; color: #64748b; padding-top: 2px;")
+        main_layout.addWidget(lbl_footer_author)
 
     def _create_card(self, title: Optional[str]) -> Tuple[QFrame, QVBoxLayout]:
         """Helper to create a visually distinct card frame with unified padding."""

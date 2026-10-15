@@ -146,8 +146,8 @@ if (-not (Test-Path (Join-Path $ScriptDir ".git"))) {
 
 # Enforce required user identity
 git config user.name "iitold"
-git config user.email "iitold@users.noreply.github.com"
-Write-Host "[+] Configured Git user: iitold <iitold@users.noreply.github.com>" -ForegroundColor Green
+git config user.email "doancongthanh92@gmail.com"
+Write-Host "[+] Configured Git user: iitold <doancongthanh92@gmail.com>" -ForegroundColor Green
 
 # Configure origin remote
 $TargetRemote = "https://github.com/iitold/qgis2ge.git"

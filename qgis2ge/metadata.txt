@@ -1,15 +1,15 @@
-﻿[general]
+[general]
 name=qgis2ge
-qgisMinimumversion=1.1.0
-qgisMaximumversion=1.1.0
+qgisMinimumVersion=3.22
+qgisMaximumVersion=3.99
 description=Export polygon layers to Google Earth (KML/KMZ) preserving styles, fill & stroke colors, opacity, and scale
-about=Official qgis2ge (QGIS to Google Earth) plugin for RF/RAN telecom engineers and GIS analysts: export polygons directly to styled KML/KMZ with custom size scaling and automatic in-app updates.
+about=Official qgis2ge (QGIS to Google Earth) plugin by iitold (doancongthanh92@gmail.com) for RF/RAN telecom engineers and GIS analysts: export polygons directly to styled KML/KMZ with custom size scaling and automatic in-app updates.
 version=1.1.0
 author=iitold
-email=iitold@users.noreply.github.com
+email=doancongthanh92@gmail.com
 category=Vector
 tags=qgis2ge,google earth,kml,kmz,export,color,polygon,telecom,rf,ran,gis,scaling
-homepage=https://github.com/iitold/qgis2ge
+homepage=https://github.com/iitold
 tracker=https://github.com/iitold/qgis2ge/issues
 repository=https://github.com/iitold/qgis2ge
 icon=icon.svg
