@@ -39,7 +39,7 @@ if (-not (Test-Path $MetadataPath)) {
 
 $CurrentVersion = ""
 $MetadataContent = Get-Content $MetadataPath -Raw -Encoding UTF8
-if ($MetadataContent -match "version=(.+)") {
+if ($MetadataContent -match "(?m)^version\s*=\s*(.+)$") {
     $CurrentVersion = $matches[1].Trim()
 }
 Write-Host "[*] Current version: $CurrentVersion" -ForegroundColor Yellow
@@ -69,7 +69,7 @@ Write-Host "[+] Preparing release version: v$NewVersion" -ForegroundColor Green
 Write-Host "[+] Release notes: $ReleaseNotes" -ForegroundColor Green
 
 # 3. Update metadata.txt
-$UpdatedMetadata = $MetadataContent -replace "version=.+", "version=$NewVersion"
+$UpdatedMetadata = $MetadataContent -replace "(?m)^version\s*=.+$", "version=$NewVersion"
 [System.IO.File]::WriteAllText($MetadataPath, $UpdatedMetadata, [System.Text.Encoding]::UTF8)
 Write-Host "[+] Updated $MetadataPath with version=$NewVersion" -ForegroundColor Green
 
