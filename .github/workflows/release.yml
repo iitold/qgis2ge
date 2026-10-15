@@ -1,0 +1,45 @@
+name: Release qgis2ge Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Package and Release Plugin
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Prepare Plugin Package
+        run: |
+          mkdir -p build
+          # Create a clean copy excluding cache and tests for release
+          rsync -av --exclude '__pycache__' --exclude '*.pyc' --exclude 'tests' qgis2ge build/
+          cd build
+          zip -r ../qgis2ge.zip qgis2ge
+          cd ..
+          echo "Created qgis2ge.zip:"
+          ls -lh qgis2ge.zip
+
+      - name: Create GitHub Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: qgis2ge.zip
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
