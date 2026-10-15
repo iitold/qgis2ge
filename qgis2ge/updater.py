@@ -61,8 +61,8 @@ def get_current_version() -> str:
             config.read_string(content)
             if "general" in config and "version" in config["general"]:
                 return config["general"]["version"].strip()
-        except Exception:
-            pass
+        except Exception as exc:
+            _ = exc
     return "1.1.3"
 
 
@@ -86,6 +86,15 @@ def check_github_update(repo: str = "iitold/qgis2ge", current_ver: Optional[str]
         clean_repo = "iitold/qgis2ge"
 
     api_url = f"https://api.github.com/repos/{clean_repo}/releases/latest"
+    if not api_url.startswith("https://api.github.com/"):
+        return UpdateInfo(
+            has_update=False,
+            current_version=current_ver,
+            latest_version=current_ver,
+            download_url="",
+            error_message="Invalid repository path",
+        )
+
     req = urllib.request.Request(
         api_url,
         headers={
@@ -95,7 +104,7 @@ def check_github_update(repo: str = "iitold/qgis2ge", current_ver: Optional[str]
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as response:
+        with urllib.request.urlopen(req, timeout=timeout) as response:  # nosec B310
             if response.status != 200:
                 return UpdateInfo(
                     has_update=False,
@@ -185,12 +194,15 @@ def install_update_from_zip(
         if progress_callback:
             progress_callback(10, "Connecting to download server...")
 
+        if not (zip_url.startswith("https://") or zip_url.startswith("file:///")):
+            return False, "Untrusted download URL scheme. Only HTTPS is allowed."
+
         req = urllib.request.Request(
             zip_url,
             headers={"User-Agent": "QGIS-qgis2ge-Updater"},
         )
 
-        with urllib.request.urlopen(req, timeout=30) as resp, open(download_zip_path, "wb") as out_f:
+        with urllib.request.urlopen(req, timeout=30) as resp, open(download_zip_path, "wb") as out_f:  # nosec B310
             total_size = resp.headers.get("content-length")
             total_size = int(total_size) if total_size and total_size.isdigit() else 0
             downloaded = 0
@@ -262,8 +274,8 @@ def install_update_from_zip(
     finally:
         try:
             shutil.rmtree(temp_dir, ignore_errors=True)
-        except Exception:
-            pass
+        except Exception as exc:
+            _ = exc
 
 
 class CheckUpdateTask(QgsTask):

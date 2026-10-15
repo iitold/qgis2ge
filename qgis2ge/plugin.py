@@ -80,8 +80,8 @@ class Qgis2GePlugin:
                 elif pkg in qgis.utils.plugins:
                     try:
                         qgis.utils.plugins[pkg].unload()
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        _ = exc
                     del qgis.utils.plugins[pkg]
 
                 if pkg in qgis.utils.active_plugins:

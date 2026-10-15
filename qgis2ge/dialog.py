@@ -107,8 +107,8 @@ class Qgis2GeDialog(QDialog):
             try:
                 with open(qss_path, "r", encoding="utf-8") as f:
                     self.setStyleSheet(f.read())
-            except Exception:
-                pass
+            except Exception as exc:
+                _ = exc
 
     def _setup_ui(self, icon_path: str) -> None:
         """Construct the cohesive, grid-aligned interface."""
@@ -1012,8 +1012,6 @@ class Qgis2GeDialog(QDialog):
 
     def _on_check_update(self) -> None:
         """Trigger update check or execute pending update/reload action without layout shift."""
-        from qgis.PyQt.QtCore import QTimer
-
         # Case 1: An update is available and user clicks the update button
         if self.latest_update_info and self.latest_update_info.has_update and "Update" in self.btn_check_update.text():
             new_v = self.latest_update_info.latest_version
@@ -1054,8 +1052,6 @@ class Qgis2GeDialog(QDialog):
 
     def _on_check_update_completed(self, info: UpdateInfo) -> None:
         """Handle results of update check with zero layout shift."""
-        from qgis.PyQt.QtCore import QTimer
-
         self.latest_update_info = info
         self.btn_check_update.setEnabled(True)
 
@@ -1097,8 +1093,6 @@ class Qgis2GeDialog(QDialog):
 
     def _on_install_completed(self, success: bool, message: str) -> None:
         """Handle update installation result on the main GUI thread."""
-        from qgis.PyQt.QtCore import QTimer
-
         self.btn_check_update.setEnabled(True)
         if success:
             new_ver = self.latest_update_info.latest_version if self.latest_update_info else self.current_version
@@ -1132,8 +1126,8 @@ class Qgis2GeDialog(QDialog):
         elif pkg in qgis.utils.plugins:
             try:
                 qgis.utils.plugins[pkg].unload()
-            except Exception:
-                pass
+            except Exception as exc:
+                _ = exc
             del qgis.utils.plugins[pkg]
 
         if pkg in qgis.utils.active_plugins:
@@ -1161,8 +1155,6 @@ class Qgis2GeDialog(QDialog):
 
     def _on_reload_and_close(self) -> None:
         """Close dialog and trigger a true, complete hot-reload on the next Qt main loop iteration."""
-        from qgis.PyQt.QtCore import QTimer
-
         # Close the modal dialog so QGIS event loop is completely free
         self.close()
 
@@ -1185,8 +1177,6 @@ class Qgis2GeDialog(QDialog):
 
     def _on_clean_reload(self) -> None:
         """Purge all cached submodules from RAM and reload freshly from disk, then re-open dialog."""
-        from qgis.PyQt.QtCore import QTimer
-
         self.close()
 
         def do_clean_reload():

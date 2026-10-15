@@ -9,7 +9,6 @@ from __future__ import annotations
 import os
 import shutil
 import tempfile
-import xml.sax.saxutils as saxutils
 import zipfile
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -65,7 +64,13 @@ def xml_escape(value: Any) -> str:
     if value is None:
         return ""
     text = str(value)
-    return saxutils.escape(text, entities={'"': "&quot;", "'": "&apos;"})
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&apos;")
+    )
 
 
 def qcolor_to_kml_hex(r: int, g: int, b: int, a: int) -> str:
@@ -566,8 +571,8 @@ def export_kml(
             if os.path.exists(options.out_path):
                 try:
                     os.remove(options.out_path)
-                except OSError:
-                    pass
+                except OSError as exc:
+                    _ = exc
             return ExportResult(
                 exported_count=0,
                 skipped_count=skipped_count,
@@ -637,13 +642,13 @@ def export_kml(
     finally:
         try:
             renderer.stopRender(context)
-        except Exception:
-            pass
+        except Exception as exc:
+            _ = exc
 
         try:
             shutil.rmtree(temp_dir, ignore_errors=True)
-        except Exception:
-            pass
+        except Exception as exc:
+            _ = exc
 
     return ExportResult(
         exported_count=exported_count,

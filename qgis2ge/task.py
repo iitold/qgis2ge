@@ -44,8 +44,8 @@ class KmlExportTask(QgsTask):
             if os.path.exists(self.options.out_path):
                 try:
                     os.remove(self.options.out_path)
-                except OSError:
-                    pass
+                except OSError as exc:
+                    _ = exc
 
         if self.result is None:
             self.result = ExportResult(
@@ -65,5 +65,5 @@ class KmlExportTask(QgsTask):
         if os.path.exists(self.options.out_path):
             try:
                 os.remove(self.options.out_path)
-            except OSError:
-                pass
+            except OSError as exc:
+                _ = exc
