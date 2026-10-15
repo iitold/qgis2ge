@@ -378,3 +378,16 @@ QFrame#footerFrame {
     padding-top: 10px;
     margin-top: 4px;
 }
+
+/* Color Swatches Container - Clean & Borderless */
+QScrollArea#swatchesScrollArea {
+    background: transparent;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+}
+
+QScrollArea#swatchesScrollArea > QWidget > QWidget {
+    background: transparent;
+}
+

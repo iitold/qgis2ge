@@ -79,8 +79,8 @@ class Qgis2GeDialog(QDialog):
         self.setObjectName("Qgis2GeDialog")
         self.setWindowTitle(self.tr("qgis2ge - QGIS to Google Earth"))
 
-        self.resize(620, 750)
-        self.setMinimumSize(540, 600)
+        self.resize(580, 640)
+        self.setMinimumSize(520, 540)
 
         plugin_dir = os.path.dirname(__file__)
         icon_path = os.path.join(plugin_dir, "icon.svg")
@@ -387,13 +387,15 @@ class Qgis2GeDialog(QDialog):
 
         self.swatches_scroll = QScrollArea()
         self.swatches_scroll.setObjectName("swatchesScrollArea")
-        self.swatches_scroll.setFixedHeight(42)
+        self.swatches_scroll.setFixedHeight(26)
+        self.swatches_scroll.setFrameShape(QFrame.NoFrame)
         self.swatches_scroll.setWidgetResizable(True)
         self.swatches_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.swatches_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.swatches_container = QWidget()
         self.swatches_layout = QHBoxLayout(self.swatches_container)
-        self.swatches_layout.setContentsMargins(0, 4, 0, 4)
-        self.swatches_layout.setSpacing(6)
+        self.swatches_layout.setContentsMargins(0, 2, 0, 2)
+        self.swatches_layout.setSpacing(5)
         self.swatches_layout.addStretch(1)
         self.swatches_scroll.setWidget(self.swatches_container)
 
@@ -450,21 +452,6 @@ class Qgis2GeDialog(QDialog):
         self.lst_fields = QListWidget()
         self.lst_fields.setFixedHeight(115)
         layout_adv_inner.addWidget(self.lst_fields)
-
-        # Plugin Update Configuration
-        lbl_upd_hdr = QLabel(self.tr("Plugin Update Repository:"))
-        lbl_upd_hdr.setStyleSheet("font-weight: 600; margin-top: 4px;")
-        layout_adv_inner.addWidget(lbl_upd_hdr)
-
-        h_repo = QHBoxLayout()
-        h_repo.setSpacing(8)
-        lbl_repo = QLabel(self.tr("GitHub repo:"))
-        lbl_repo.setProperty("class", "FormLabel")
-        self.txt_repo = QLineEdit()
-        self.txt_repo.setPlaceholderText("iitold/qgis2ge")
-        h_repo.addWidget(lbl_repo)
-        h_repo.addWidget(self.txt_repo, 1)
-        layout_adv_inner.addLayout(h_repo)
 
         self.chk_auto_update = QCheckBox(self.tr("Check for updates automatically when opening dialog"))
         layout_adv_inner.addWidget(self.chk_auto_update)
@@ -768,8 +755,8 @@ class Qgis2GeDialog(QDialog):
 
         for col in color_list:
             chip = QLabel()
-            chip.setFixedSize(26, 26)
-            pixmap = QPixmap(26, 26)
+            chip.setFixedSize(22, 22)
+            pixmap = QPixmap(22, 22)
             pixmap.fill(Qt.transparent)
 
             p = QPainter(pixmap)
@@ -791,7 +778,7 @@ class Qgis2GeDialog(QDialog):
 
             p.setPen(stroke_pen)
             p.setBrush(QBrush(fill_c))
-            p.drawRoundedRect(1, 1, 24, 24, 5, 5)
+            p.drawRoundedRect(1, 1, 20, 20, 4, 4)
             p.end()
 
             chip.setPixmap(pixmap)
@@ -936,9 +923,6 @@ class Qgis2GeDialog(QDialog):
             self.SETTINGS_PREFIX + "scale_anchor", self.cbo_scale_anchor.currentData()
         )
         self.settings.setValue(
-            self.SETTINGS_PREFIX + "github_repo", self.txt_repo.text().strip()
-        )
-        self.settings.setValue(
             self.SETTINGS_PREFIX + "auto_check_update", self.chk_auto_update.isChecked()
         )
 
@@ -990,9 +974,6 @@ class Qgis2GeDialog(QDialog):
         idx = self.cbo_scale_anchor.findData(anchor_val)
         if idx >= 0:
             self.cbo_scale_anchor.setCurrentIndex(idx)
-
-        repo = self.settings.value(self.SETTINGS_PREFIX + "github_repo", "iitold/qgis2ge")
-        self.txt_repo.setText(repo)
 
         auto_upd = self.settings.value(self.SETTINGS_PREFIX + "auto_check_update", False, type=bool)
         self.chk_auto_update.setChecked(auto_upd)
@@ -1081,7 +1062,7 @@ class Qgis2GeDialog(QDialog):
 
     def _on_check_update(self) -> None:
         """Trigger update check against GitHub repository in background."""
-        repo = self.txt_repo.text().strip() or "iitold/qgis2ge"
+        repo = "iitold/qgis2ge"
         self.frame_update_banner.setVisible(True)
         self.lbl_update_status.setText(self.tr("Checking for updates on GitHub..."))
         self.btn_update_now.setVisible(False)
